@@ -42,6 +42,7 @@ typedef struct {
     float angle_per_sample;
     float amplitude;
     float last_value;
+    float duty;      //add for square waveform
 } Osc_TypeDef;
 
 /* Global Variable */
@@ -59,12 +60,28 @@ static inline void update_dac_buffer (uint32_t *buffer_address)
     {
         for (uint8_t oscillator = 0; oscillator < 2; ++oscillator)
         {
-            osc[oscillator].last_value = osc[oscillator].amplitude * sinf (osc[oscillator].angle);
-            osc[oscillator].angle += osc[oscillator].angle_per_sample; // rotate
-            if (osc[oscillator].angle > M_TWOPI)
-                osc[oscillator].angle -= M_TWOPI; // roll over
+            if(oscillator==1)
+            {
+                osc[oscillator].last_value = osc[oscillator].amplitude * sinf (osc[oscillator].angle);
+                osc[oscillator].angle += osc[oscillator].angle_per_sample; // rotate
+                if (osc[oscillator].angle > M_TWOPI)
+                    osc[oscillator].angle -= M_TWOPI; // roll over
+            }
+            else if(oscillator==0)
+            {
+                if(sample <= ( osc[oscillator].duty * BUFFER_SIZE))
+                {
+                    osc[oscillator].last_value = 1;
+                }
+                else
+                {
+                    osc[oscillator].last_value = 0;
+                }
+            }
+
         }
-        buffer_address[sample] = (((uint16_t) (MID_POINT + MID_POINT * osc[1].last_value)) << 16) | ((uint16_t) (MID_POINT + MID_POINT * osc[0].last_value));
+//        buffer_address[sample] = (((uint16_t) (MID_POINT + MID_POINT * osc[1].last_value)) << 16) | ((uint16_t) (MID_POINT + MID_POINT * osc[0].last_value));
+       buffer_address[sample] = (((uint16_t) (MID_POINT + MID_POINT * osc[1].last_value)) << 16) | ((uint16_t) (MAX_VALUE * osc[0].last_value));
     }
 }
 
@@ -345,6 +362,7 @@ int main (void) {
     uint32_t now = 0, last_tick = 0, last_amp = 0, last_freq = 0;
     float amp = 0, amp_change = 0.01;
     float start_freq = 500, end_freq = 1000, freq_change = 20, freq = 500;
+    float start_duty = 0.1, end_duty = 0.9, delta = 0.1, duty = 0.1;
     while (1) {
 //        now = GetTick ();
         now = rt_tick_get();
@@ -361,18 +379,26 @@ int main (void) {
         if (now - last_freq >= 100) // 100ms change
         {
 
-            set_freq(&osc[0], freq);
-            freq += freq_change;
-            if (freq >= end_freq) freq_change = -20;
-            if (freq <= start_freq) freq_change = 20;
-            last_freq = now;
+//            set_freq(&osc[0], freq);
+//            freq += freq_change;
+//            if (freq >= end_freq) freq_change = -20;
+//            if (freq <= start_freq) freq_change = 20;
+//            last_freq = now;                                  //used for changing freq
+
+            osc[0].duty = duty;
+            duty += delta ;
+            if (duty >= end_duty)   delta = -0.1;
+            if (duty <= start_duty) delta = 0.1;
+            last_freq = now;                                    //used for changing duty
+
+
         }
         if (now - last_tick >= 1000) //1000ms change
         {
             rt_kprintf ("Tick %lu: full = %lu half = %lu adc = %lu\n", now / 1000, full_count, half_count, adc_count);
             last_tick = now;
         }
-        rt_thread_delay(5); //5 ticks
+        rt_thread_delay(5); //5
 
     }
 }

@@ -59,7 +59,7 @@ all: test2.elf secondary-outputs
 
 # Tool invocations
 test2.elf: $(OBJS) $(USER_OBJS)
-	@	@	riscv-none-embed-gcc -march=rv32imafcxw -mabi=ilp32f -msmall-data-limit=8 -msave-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized  -g -T "C:\Users\TempersLee\Desktop\test2-main\Ld\Link.ld" -nostartfiles -Xlinker --gc-sections -Lm -Wl,-Map,"test2.map" --specs=nano.specs --specs=nosys.specs -o "test2.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	@	@	riscv-none-embed-gcc -march=rv32imafcxw -mabi=ilp32f -msmall-data-limit=8 -msave-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized  -g -T "G:\Git\TempersLee\test2-main\Ld\Link.ld" -nostartfiles -Xlinker --gc-sections -Lm -Wl,-Map,"test2.map" --specs=nano.specs --specs=nosys.specs -o "test2.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
 test2.hex: test2.elf
 	@	riscv-none-embed-objcopy -O ihex "test2.elf"  "test2.hex"
